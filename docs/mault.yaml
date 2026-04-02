@@ -1,0 +1,211 @@
+# docs/mault.yaml
+# Mault UC Detector Configuration for crud-api
+# Generated: Step 7 - Mault Enforcement
+
+version: "1.0"
+
+project:
+  name: crud-api
+  stack: node
+  framework: express
+  language: javascript
+
+# ============================================================
+# UC DETECTORS
+# Detects Undesirable Conditions (UCs) in the codebase
+# ============================================================
+
+detectors:
+  UC01:
+    name: Missing Environment Variable Validation
+    description: >
+      Detects environment variables accessed without validation or defaults.
+      Missing env var validation causes runtime crashes in production.
+    severity: high
+    patterns:
+      - pattern: "process\\.env\\.[A-Z_]+(?!.*\\|\\|)"
+        message: "Environment variable accessed without fallback or validation"
+        files: ["src/**/*.js"]
+        exclude: ["src/env.js"]
+    remedy: "Add variable to src/env.js with validation and default"
+
+  UC04:
+    name: Missing Error Handling in Async Operations
+    description: >
+      Detects async functions or promise chains missing try/catch or .catch().
+      Unhandled promise rejections crash Node.js processes.
+    severity: high
+    patterns:
+      - pattern: "async\\s+function(?!.*try)"
+        message: "Async function without try/catch block"
+        files: ["src/**/*.js"]
+      - pattern: "\\.then\\((?!.*\\.catch)"
+        message: "Promise chain missing .catch() handler"
+        files: ["src/**/*.js"]
+    remedy: "Wrap async operations in try/catch or add .catch() handler"
+
+  UC07:
+    name: Hardcoded Configuration Values
+    description: >
+      Detects hardcoded ports, URLs, credentials, or magic numbers.
+      Hardcoded values prevent environment-specific configuration.
+    severity: medium
+    patterns:
+      - pattern: "(?:port|PORT)\\s*[=:]\\s*[0-9]{4,5}(?!\\s*\\|\\|)"
+        message: "Hardcoded port number - use environment variable"
+        files: ["src/**/*.js"]
+        exclude: ["src/env.js"]
+      - pattern: "(?:host|HOST)\\s*[=:]\\s*['\"](?!localhost)['\"]"
+        message: "Hardcoded host - use environment variable"
+        files: ["src/**/*.js"]
+        exclude: ["src/env.js"]
+      - pattern: "http://localhost:[0-9]+"
+        message: "Hardcoded localhost URL - use environment variable"
+        files: ["src/**/*.js"]
+        exclude: ["tests/**/*.js"]
+    remedy: "Move value to src/env.js and reference process.env"
+
+  UC08:
+    name: Missing Input Validation
+    description: >
+      Detects route handlers that access req.body or req.params without validation.
+      Missing input validation leads to data corruption and security vulnerabilities.
+    severity: high
+    patterns:
+      - pattern: "req\\.body\\.(?!.*typeof|.*===|.*!==)"
+        message: "req.body property accessed without type/existence check"
+        files: ["src/routes/**/*.js"]
+      - pattern: "req\\.params\\.(?!.*parseInt|.*Number|.*typeof)"
+        message: "req.params property accessed without coercion or validation"
+        files: ["src/routes/**/*.js"]
+    remedy: "Add input validation middleware or inline checks before use"
+
+  UC09:
+    name: Missing HTTP Status Codes
+    description: >
+      Detects res.json() or res.send() calls without explicit status codes.
+      Implicit 200 OK masks errors and breaks API clients.
+    severity: medium
+    patterns:
+      - pattern: "res\\.json\\((?!.*\\.status)"
+        message: "Response sent without explicit HTTP status code"
+        files: ["src/**/*.js"]
+    remedy: "Chain .status(code) before .json(): res.status(200).json(...)"
+
+  UC11:
+    name: Missing Test Coverage for New Routes
+    description: >
+      Detects route files without corresponding integration test files.
+      Untested routes ship broken behavior silently.
+    severity: high
+    patterns:
+      - pattern: "router\\.(get|post|put|patch|delete)\\("
+        message: "Route defined - ensure integration test exists"
+        files: ["src/routes/**/*.js"]
+    check:
+      for_each_file:
+        matching: "src/routes/(.*)\\.js"
+        expect_file: "tests/integration/$1.integration.test.js"
+    remedy: "Create tests/integration/<route>.integration.test.js"
+
+  UC16:
+    name: Dependency Health - Outdated or Vulnerable Packages
+    description: >
+      Detects high or critical severity vulnerabilities in npm dependencies.
+      Vulnerable dependencies are a primary attack vector in production.
+    severity: critical
+    check:
+      command: "npm audit --audit-level=high --omit=dev"
+      fail_on_exit_nonzero: true
+    remedy: "Run npm audit fix or update the affected package"
+    pre_commit_hook: "npm-audit"
+
+  UC18:
+    name: Structural Governance Violations
+    description: >
+      Detects files that violate single-responsibility or size limits.
+      Monolithic files become untestable and block parallel development.
+    severity: medium
+    patterns:
+      - pattern: "."
+        message: "File exceeds size limit"
+        files: ["src/**/*.js"]
+        max_lines: 200
+    remedy: "Split file into focused modules under src/"
+
+# ============================================================
+# RULES
+# Structural governance rules (UC18)
+# ============================================================
+
+rules:
+  file_size:
+    max_lines: 200
+    applies_to: ["src/**/*.js"]
+    exclude: ["src/__tests__/**"]
+    message: "Source file exceeds 200-line limit - apply SRP and split"
+
+  single_responsibility:
+    applies_to: ["src/**/*.js"]
+    max_exports: 1
+    message: "File exports more than one top-level entity"
+
+  test_colocation:
+    applies_to: ["src/**/*.js"]
+    require_test: true
+    test_patterns:
+      - "tests/unit/{basename}.test.js"
+      - "tests/integration/{basename}.integration.test.js"
+    message: "Source file missing corresponding test file"
+
+  route_structure:
+    applies_to: ["src/routes/**/*.js"]
+    require_integration_test: true
+    message: "Route file missing integration test"
+
+# ============================================================
+# DEPRECATED PATTERNS
+# Patterns that must not appear in new code
+# ============================================================
+
+deprecatedPatterns:
+  - id: no-var
+    pattern: "^\\s*var\\s+"
+    message: "Use const or let instead of var"
+    files: ["src/**/*.js"]
+
+  - id: no-console-log
+    pattern: "console\\.log\\("
+    message: "Use structured logging instead of console.log in production code"
+    files: ["src/**/*.js"]
+    exclude: ["src/index.js"]
+
+  - id: no-require-in-function
+    pattern: "function.*\\{[^}]*require\\("
+    message: "Move require() to top of file"
+    files: ["src/**/*.js"]
+
+# ============================================================
+# CONVENTIONS
+# Enforced naming and structural conventions
+# ============================================================
+
+conventions:
+  routes:
+    pattern: "src/routes/*.js"
+    naming: "kebab-case"
+    must_export: ["router"]
+    must_use: ["express.Router()"]
+
+  tests:
+    unit:
+      pattern: "tests/unit/**/*.test.js"
+      must_import_from: ["../../src/"]
+    integration:
+      pattern: "tests/integration/**/*.integration.test.js"
+      must_use: ["supertest"]
+
+  env:
+    all_env_vars: "src/env.js"
+    no_direct_process_env: true
+    except: ["src/env.js"]
