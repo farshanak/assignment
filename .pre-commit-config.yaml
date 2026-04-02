@@ -1,0 +1,73 @@
+# .pre-commit-config.yaml
+# Pre-commit hooks for crud-api (Node.js)
+# Adapted from Mault Production-Readiness Kit - Step 6
+#
+# Install: pip install pre-commit && pre-commit install
+
+fail_fast: true
+
+repos:
+  # =========================================================================
+  # LAYER 0: FILE HYGIENE (fastest - run first)
+  # =========================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+
+  # =========================================================================
+  # LAYER 0 (LOCAL): CONFIG FILE VALIDATION
+  # =========================================================================
+  - repo: local
+    hooks:
+      - id: config-validation
+        name: Config File Validation (Layer 0)
+        entry: bash scripts/validate-configs.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # =========================================================================
+  # LAYER 1: LINTING (ESLint)
+  # =========================================================================
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint (Layer 1)
+        entry: npx eslint src/
+        language: system
+        files: src/.*\.js$
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # =========================================================================
+  # LAYER 3: TEST IMPACT ANALYSIS (TIA)
+  # =========================================================================
+  - repo: local
+    hooks:
+      - id: jest-tia
+        name: Jest TIA (Layer 3)
+        entry: npm run test:tia
+        language: system
+        files: \.js$
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # =========================================================================
+  # LAYER 6: SECURITY GATE (npm audit)
+  # =========================================================================
+  - repo: local
+    hooks:
+      - id: npm-audit
+        name: Security Audit - npm audit (Layer 6)
+        entry: bash -c 'npm audit --audit-level=high --omit=dev 2>/dev/null && echo "No high-severity vulnerabilities"'
+        language: system
+        pass_filenames: false
+        files: package\.json$
+        stages: [pre-commit]
