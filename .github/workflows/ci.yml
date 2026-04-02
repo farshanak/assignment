@@ -45,4 +45,4 @@ jobs:
           cache: 'npm'
       - run: npm ci --prefer-offline --no-audit --no-fund
       - name: Integration tests
-        run: npx jest --testPathPattern="tests/integration" --coverage --forceExit
+        run: npx jest --testPathPatterns="tests/integration" --coverage --forceExit
