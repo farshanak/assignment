@@ -7,6 +7,7 @@ const PORT = env.port;
 
 app.use(express.json());
 
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/tasks', tasksRouter);
 
 app.listen(PORT, () => {
