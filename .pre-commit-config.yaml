@@ -71,3 +71,16 @@ repos:
         pass_filenames: false
         files: package\.json$
         stages: [pre-commit]
+
+  # =========================================================================
+  # UC16: DEPENDENCY HEALTH (outdated/vulnerable packages)
+  # =========================================================================
+  - repo: local
+    hooks:
+      - id: uc16-dependency-health
+        name: UC16 Dependency Health Check
+        entry: bash scripts/uc16-dependency-health.sh
+        language: system
+        pass_filenames: false
+        files: "package(-lock)?\\.json$"
+        stages: [pre-commit]
