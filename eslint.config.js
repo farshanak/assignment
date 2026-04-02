@@ -19,6 +19,7 @@ module.exports = [
     rules: {
       'no-unused-vars': 'warn',
     },
+    ignores: ['docs/patterns/**'],
   },
   {
     files: ['src/__tests__/**/*.js', '**/*.test.js', '**/*.spec.js'],
