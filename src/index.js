@@ -3,13 +3,17 @@ const tasksRouter = require('./routes/tasks');
 const env = require('./env');
 
 const app = express();
-const PORT = env.port;
 
 app.use(express.json());
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/tasks', tasksRouter);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Only start the server when this file is run directly (not when required in tests)
+if (require.main === module) {
+  app.listen(env.port, () => {
+    console.log(`Server running on http://localhost:${env.port}`);
+  });
+}
+
+module.exports = app;
