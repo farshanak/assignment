@@ -86,3 +86,61 @@ jobs:
             exit 1
           fi
           echo "Branch name valid: $BRANCH"
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks secret detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: true
+
+  package-audit:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Flag dependency changes
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E 'package(-lock)?\.json' || true)
+          if [ -n "$CHANGED" ]; then
+            echo "::warning::Dependency files changed in this PR: $CHANGED"
+            echo "Running security audit..."
+            npm audit --audit-level=high --omit=dev || echo "::error::High/critical vulnerabilities found"
+          else
+            echo "No dependency changes detected"
+          fi
+
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Run governance checks
+        run: |
+          node scripts/governance/check-silent-catches.js
+          node scripts/governance/check-eslint-disable.js
+          node scripts/governance/check-mock-tax.js
+          node scripts/governance/check-adversarial-mocks.js
+          node scripts/governance/verify-integration-pairing.js
+          node scripts/governance/verify-behavioral-pairing.js
+          node scripts/governance/check-hallucinations.js
+          node scripts/governance/check-circular-deps.js
+          node scripts/governance/check-zod-boundaries.js
+          node scripts/governance/check-skipped-tests.js
+          node scripts/governance/guardrails-check.js
+          node scripts/governance/code-health-check.js

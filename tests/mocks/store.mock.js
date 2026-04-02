@@ -10,7 +10,7 @@
 
 const storeMock = {
   getAll: jest.fn().mockReturnValue([]),
-  getById: jest.fn().mockReturnValue(undefined),
+  getById: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),

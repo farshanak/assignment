@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "step": 8,
+  "generatedAt": "2026-04-02T00:00:00Z",
+  "stack": "node",
+  "scripts": {
+    "check-silent-catches.js": { "gate": "Iron Dome Ratchet", "baseline": ".memory-layer/baselines/silent-catches.json" },
+    "check-eslint-disable.js": { "gate": "Escape Hatch Gate", "baseline": ".memory-layer/baselines/eslint-disable.json" },
+    "check-mock-tax.js": { "gate": "Rising Tide", "threshold": "2.0x" },
+    "check-adversarial-mocks.js": { "gate": "Mock Quality", "patterns": 3 },
+    "verify-integration-pairing.js": { "gate": "Buddy System" },
+    "verify-behavioral-pairing.js": { "gate": "Perception Check" },
+    "check-hallucinations.js": { "gate": "Supply Chain", "blocklist": 12 },
+    "check-security-critical.js": { "gate": "Gatekeeper Protocol v2.0" },
+    "check-circular-deps.js": { "gate": "Dependency Health" },
+    "check-duplicate-code.js": { "gate": "DRY Enforcement", "baseline": ".memory-layer/baselines/duplicate-code.json" },
+    "check-zod-boundaries.js": { "gate": "Schema Validation" },
+    "check-mutation-score.js": { "gate": "Test Quality", "threshold": "70%" },
+    "guardrails-check.js": { "gate": "SRP Guardrails", "baseline": ".memory-layer/baselines/guardrails.json" },
+    "code-health-check.js": { "gate": "Code Health", "baseline": ".memory-layer/baselines/code-health.json" },
+    "check-per-file-baseline.mjs": { "gate": "Coverage Fortress", "baseline": ".memory-layer/baselines/coverage.json" },
+    "check-skipped-tests.js": { "gate": "Test Discipline", "threshold": "5%" },
+    "collect-metrics.js": { "gate": "Metrics", "log": ".memory-layer/logs/metrics.json" },
+    "report-metrics.js": { "gate": "Metrics", "report": ".memory-layer/logs/governance-report.md" }
+  },
+  "baselines": [
+    ".memory-layer/baselines/silent-catches.json",
+    ".memory-layer/baselines/eslint-disable.json",
+    ".memory-layer/baselines/duplicate-code.json",
+    ".memory-layer/baselines/guardrails.json",
+    ".memory-layer/baselines/code-health.json",
+    ".memory-layer/baselines/coverage.json"
+  ],
+  "ci": {
+    "gitleaks": true,
+    "packageAudit": true,
+    "governanceJob": true
+  }
+}

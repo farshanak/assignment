@@ -1,0 +1,43 @@
+# .gitleaks.toml
+# Gitleaks secret detection configuration
+
+title = "crud-api gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)\s*[:=]\s*['"]?[a-zA-Z0-9_\-]{20,}'''
+tags = ["key", "API"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret"
+regex = '''(?i)(jwt[_-]?secret|jwt[_-]?key)\s*[:=]\s*['"][^'"]{8,}'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "node-env-credentials"
+description = "Node.js environment credentials"
+regex = '''(?i)(password|passwd|secret|token)\s*=\s*['"][^'"]{8,}['"]'''
+tags = ["credentials"]
+[rules.allowlist]
+regexes = [
+  "process\\.env\\.",
+  "your[_-]?secret",
+  "example",
+  "placeholder",
+  "changeme",
+]
+
+[allowlist]
+paths = [
+  ".gitleaks.toml",
+  "package-lock.json",
+  "node_modules",
+  "coverage",
+  ".mault",
+  "*.test.js",
+]

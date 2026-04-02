@@ -1,86 +1,137 @@
-# .pre-commit-config.yaml
-# Pre-commit hooks for crud-api (Node.js)
-# Adapted from Mault Production-Readiness Kit - Step 6
-#
-# Install: pip install pre-commit && pre-commit install
-
 fail_fast: true
-
 repos:
-  # =========================================================================
-  # LAYER 0: FILE HYGIENE (fastest - run first)
-  # =========================================================================
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
-      - id: check-added-large-files
-        args: ['--maxkb=500']
-      - id: detect-private-key
-
-  # =========================================================================
-  # LAYER 0 (LOCAL): CONFIG FILE VALIDATION
-  # =========================================================================
-  - repo: local
-    hooks:
-      - id: config-validation
-        name: Config File Validation (Layer 0)
-        entry: bash scripts/validate-configs.sh
-        language: system
-        pass_filenames: false
-        stages: [pre-commit]
-
-  # =========================================================================
-  # LAYER 1: LINTING (ESLint)
-  # =========================================================================
-  - repo: local
-    hooks:
-      - id: eslint
-        name: ESLint (Layer 1)
-        entry: npx eslint src/
-        language: system
-        files: src/.*\.js$
-        pass_filenames: false
-        stages: [pre-commit]
-
-  # =========================================================================
-  # LAYER 3: TEST IMPACT ANALYSIS (TIA)
-  # =========================================================================
-  - repo: local
-    hooks:
-      - id: jest-tia
-        name: Jest TIA (Layer 3)
-        entry: npm run test:tia
-        language: system
-        files: \.js$
-        pass_filenames: false
-        stages: [pre-commit]
-
-  # =========================================================================
-  # LAYER 6: SECURITY GATE (npm audit)
-  # =========================================================================
-  - repo: local
-    hooks:
-      - id: npm-audit
-        name: Security Audit - npm audit (Layer 6)
-        entry: bash -c 'npm audit --audit-level=high --omit=dev 2>/dev/null && echo "No high-severity vulnerabilities"'
-        language: system
-        pass_filenames: false
-        files: package\.json$
-        stages: [pre-commit]
-
-  # =========================================================================
-  # UC16: DEPENDENCY HEALTH (outdated/vulnerable packages)
-  # =========================================================================
-  - repo: local
-    hooks:
-      - id: uc16-dependency-health
-        name: UC16 Dependency Health Check
-        entry: bash scripts/uc16-dependency-health.sh
-        language: system
-        pass_filenames: false
-        files: "package(-lock)?\\.json$"
-        stages: [pre-commit]
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-json
+  - id: check-added-large-files
+    args:
+    - --maxkb=500
+  - id: detect-private-key
+- repo: local
+  hooks:
+  - id: config-validation
+    name: Config File Validation (Layer 0)
+    entry: bash scripts/validate-configs.sh
+    language: system
+    pass_filenames: false
+    stages:
+    - pre-commit
+- repo: local
+  hooks:
+  - id: eslint
+    name: ESLint (Layer 1)
+    entry: npx eslint src/
+    language: system
+    files: src/.*\.js$
+    pass_filenames: false
+    stages:
+    - pre-commit
+- repo: local
+  hooks:
+  - id: jest-tia
+    name: Jest TIA (Layer 3)
+    entry: npm run test:tia
+    language: system
+    files: \.js$
+    pass_filenames: false
+    stages:
+    - pre-commit
+- repo: local
+  hooks:
+  - id: npm-audit
+    name: Security Audit - npm audit (Layer 6)
+    entry: bash -c 'npm audit --audit-level=high --omit=dev 2>/dev/null && echo "No
+      high-severity vulnerabilities"'
+    language: system
+    pass_filenames: false
+    files: package\.json$
+    stages:
+    - pre-commit
+- repo: local
+  hooks:
+  - id: uc16-dependency-health
+    name: UC16 Dependency Health Check
+    entry: bash scripts/uc16-dependency-health.sh
+    language: system
+    pass_filenames: false
+    files: package(-lock)?\.json$
+    stages:
+    - pre-commit
+- repo: local
+  hooks:
+  - id: governance-silent-catches
+    name: Iron Dome - Silent Catches
+    entry: node scripts/governance/check-silent-catches.js
+    language: system
+    pass_filenames: false
+    files: src/.*\.js$
+    stages:
+    - pre-commit
+  - id: governance-eslint-disable
+    name: Escape Hatch - ESLint Suppressions
+    entry: node scripts/governance/check-eslint-disable.js
+    language: system
+    pass_filenames: false
+    files: src/.*\.js$
+    stages:
+    - pre-commit
+  - id: governance-mock-tax
+    name: Rising Tide - Mock Tax
+    entry: node scripts/governance/check-mock-tax.js
+    language: system
+    pass_filenames: false
+    files: \.(js)$
+    stages:
+    - pre-commit
+  - id: governance-adversarial-mocks
+    name: Mock Quality - Adversarial Mocks
+    entry: node scripts/governance/check-adversarial-mocks.js
+    language: system
+    pass_filenames: false
+    files: tests/.*\.js$
+    stages:
+    - pre-commit
+  - id: governance-integration-pairing
+    name: Buddy System - Integration Pairing
+    entry: node scripts/governance/verify-integration-pairing.js
+    language: system
+    pass_filenames: false
+    files: src/routes/.*\.js$
+    stages:
+    - pre-commit
+  - id: governance-hallucinations
+    name: Supply Chain - Hallucination Check
+    entry: node scripts/governance/check-hallucinations.js
+    language: system
+    pass_filenames: false
+    files: package\.json$
+    stages:
+    - pre-commit
+  - id: governance-circular-deps
+    name: Dependency Health - Circular Deps
+    entry: node scripts/governance/check-circular-deps.js
+    language: system
+    pass_filenames: false
+    files: src/.*\.js$
+    stages:
+    - pre-commit
+  - id: governance-guardrails
+    name: SRP Guardrails
+    entry: node scripts/governance/guardrails-check.js
+    language: system
+    pass_filenames: false
+    files: (src|tests)/.*\.js$
+    stages:
+    - pre-commit
+  - id: governance-skipped-tests
+    name: Test Discipline - Skipped Tests
+    entry: node scripts/governance/check-skipped-tests.js
+    language: system
+    pass_filenames: false
+    files: tests/.*\.js$
+    stages:
+    - pre-commit
