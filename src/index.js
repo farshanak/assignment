@@ -1,8 +1,9 @@
 const express = require('express');
 const tasksRouter = require('./routes/tasks');
+const env = require('./env');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.port;
 
 app.use(express.json());
 
